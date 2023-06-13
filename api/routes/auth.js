@@ -1,29 +1,26 @@
 const express = require("express");
-const {
-  login,
-  signup,
-  forgotPassword,
-  deleteUser,
-  passwordReset,
-} = require("../controllers/auth");
-const {
-  loginValidation,
-  signupValidation,
-  forgotPasswordValidation,
-  passwordResetValidation
-} = require("../validators/auth");
+const authCtrl = require("../controllers/auth");
+const authValidators = require("../validators/auth");
 const isAuth = require("../middlewares/is-authorized");
 
 const router = express.Router();
 
-router.post("/login", loginValidation, login);
+router.post("/login", authValidators.loginValidation, authCtrl.login);
 
-router.post("/signup", signupValidation, signup);
+router.post("/signup", authValidators.signupValidation, authCtrl.signup);
 
-router.delete("/delete-account", isAuth, deleteUser);
+router.delete("/delete-account", isAuth, authCtrl.deleteUser);
 
-router.post("/forgot-password", forgotPasswordValidation, forgotPassword);
+router.post(
+  "/forgot-password",
+  authValidators.forgotPasswordValidation,
+  authCtrl.forgotPassword
+);
 
-router.post("/password-reset", passwordResetValidation, passwordReset);
+router.post(
+  "/password-reset",
+  authValidators.passwordResetValidation,
+  authCtrl.passwordReset
+);
 
 module.exports = router;

@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
-const crypto = require('crypto');
-const cryptHelper = require('../modules/crypto');
+const mongoose = require("mongoose");
+const crypto = require("crypto");
+const cryptHelper = require("../modules/crypto");
 
 const Schema = mongoose.Schema;
 
@@ -32,12 +32,19 @@ const User = new Schema(
       type: Boolean,
       default: true,
     },
+    refreshToken: {
+      type: String,
+      unique: true,
+    },
+    refreshTokenExpiration: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
 
 User.methods.encryptPassword = function (password) {
-  return crypto.pbkdf2Sync(password, this.salt, 10000, 512, 'sha512');
+  return crypto.pbkdf2Sync(password, this.salt, 10000, 512, "sha512");
 };
 
 User.methods.encryptEmail = function (email) {
@@ -48,11 +55,11 @@ User.methods.encryptUsername = function (username) {
   return cryptHelper.encrypt(username);
 };
 
-User.virtual('password')
+User.virtual("password")
   .set(function (password) {
     this._plainPassword = password;
     if (!this.salt) {
-      this.salt = crypto.randomBytes(128).toString('hex');
+      this.salt = crypto.randomBytes(128).toString("hex");
     }
     this.hashedPassword = this.encryptPassword(password);
   })
@@ -60,7 +67,7 @@ User.virtual('password')
     return this._plainPassword;
   });
 
-User.virtual('email')
+User.virtual("email")
   .set(function (email) {
     this.hashedEmail = this.encryptEmail(email);
   })
@@ -68,7 +75,7 @@ User.virtual('email')
     return cryptHelper.decrypt(this.hashedEmail);
   });
 
-User.virtual('username')
+User.virtual("username")
   .set(function (usename) {
     this.hashedUsername = this.encryptEmail(usename);
   })
@@ -80,4 +87,4 @@ User.methods.checkPassword = function (password) {
   return this.encryptPassword(password) == this.hashedPassword;
 };
 
-module.exports = mongoose.model('User', User);
+module.exports = mongoose.model("User", User);

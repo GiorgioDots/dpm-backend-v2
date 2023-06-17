@@ -1,11 +1,12 @@
 const jwt = require("jsonwebtoken");
+const randToken = require("rand-token");
 
 const { validateRequest } = require("../validators/shared");
 const crypto = require("../../modules/crypto");
 const mailJet = require("../../modules/mailjet");
 
 const User = require("../../models/user");
-const Password = require('../../models/password')
+const Password = require("../../models/password");
 
 const config = require("../../config");
 
@@ -31,6 +32,12 @@ exports.login = async (req, res, next) => {
       throw error;
     }
 
+    let refToken = generateRefreshToken();
+    user.refreshToken = refToken.refreshToken;
+    user.refreshTokenExpiration = refToken.refreshTokenExpiration;
+
+    await user.save();
+
     const token = generateToken(user);
 
     res.status(200).json({
@@ -38,6 +45,7 @@ exports.login = async (req, res, next) => {
       userId: user._id.toString(),
       username: user.username,
       token: token,
+      refreshToken: refToken.refreshToken,
     });
   } catch (error) {
     next(error);
@@ -65,6 +73,10 @@ exports.signup = async (req, res, next) => {
       gdprAgree: gdprAgree,
     });
 
+    let refToken = generateRefreshToken();
+    user.refreshToken = refToken.refreshToken;
+    user.refreshTokenExpiration = refToken.refreshTokenExpiration;
+
     const savedUser = await user.save();
 
     const token = generateToken(savedUser);
@@ -74,6 +86,7 @@ exports.signup = async (req, res, next) => {
       userId: savedUser._id.toString(),
       username: savedUser.username,
       token: token,
+      refreshToken: refToken.refreshToken,
     });
   } catch (error) {
     return next(error);
@@ -147,10 +160,39 @@ exports.passwordReset = async (req, res, next) => {
 
     user.password = newPassword;
     user.forgotPasswordCompleted = true;
+    user.refreshToken = null;
+    user.refreshTokenExpiration = null;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.refreshToken = async (req, res, next) => {
+  try {
+    validateRequest(req);
+    const refreshToken = req.body.refreshToken;
+    const user = await User.findOne({ refreshToken: refreshToken });
+    if (user == null || user.refreshTokenExpiration.getTime() < Date.now()) {
+      const error = new Error("RefreshToken not valid");
+      error.statusCode = 422;
+      throw error;
+    }
+    let refToken = generateRefreshToken();
+    user.refreshToken = refToken.refreshToken;
+    user.refreshTokenExpiration = refToken.refreshTokenExpiration;
 
     await user.save();
 
-    res.status(200).json({ message: 'Password updated successfully' });
+    let token = generateToken(user);
+
+    res.status(200).json({
+      username: user.username,
+      token: token,
+      refreshToken: refToken.refreshToken,
+    });
   } catch (error) {
     return next(error);
   }
@@ -167,4 +209,15 @@ const generateToken = (user) => {
       expiresIn: config.security.jwt_expires_in,
     }
   );
+};
+
+const generateRefreshToken = () => {
+  let refToken = randToken.uid(256);
+  let refTokenExpiration = new Date(
+    Date.now() + config.security.refresh_token_expires_in
+  );
+  return {
+    refreshToken: refToken,
+    refreshTokenExpiration: refTokenExpiration,
+  };
 };

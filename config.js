@@ -13,6 +13,7 @@ const config = {
     crypt_key: process.env.CRYPT_KEY,
     crypt_iv: process.env.CRYPT_EV,
     forgot_pwd_expires_in: parseInt(process.env.FORGOT_PWD_EXPIRES_IN),
+    refresh_token_expires_in: parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN)
   },
   mailjet: {
     apiKey: process.env.MAILJET_API_KEY,

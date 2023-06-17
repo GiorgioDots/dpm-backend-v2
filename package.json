@@ -36,6 +36,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^5.10.19",
     "node-mailjet": "^6.0.2",
+    "rand-token": "^1.0.1",
     "uuid": "^9.0.0",
     "winston": "^3.9.0"
   }

@@ -35,9 +35,9 @@ fs.readdirSync("./api/routes/")
     app.use("/api/" + name, require("./api/routes/" + name));
   });
 
-// app.use((req, res) => {
-//   res.redirect("/");
-// });
+app.use((req, res) => {
+  res.redirect("/");
+});
 
 app.use(expressErrorLogger);
 app.use(errorResponseHandler);

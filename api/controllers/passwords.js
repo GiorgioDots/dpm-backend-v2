@@ -24,7 +24,7 @@ exports.createPassword = async (req, res, next) => {
       userId: userId,
     });
     await password.save();
-    res.status(201).json({ message: "Password created" });
+    res.status(201).json({ message: "Password created", id: password._id });
   } catch (error) {
     return next(error);
   }
@@ -102,10 +102,12 @@ exports.getPassword = async (req, res, next) => {
   try {
     const userId = req.userId;
     const passwordId = req.params.passwordId;
-
-    const password = await Password.findOne({
-      $and: [{ _id: passwordId }, { userId: userId }],
-    });
+    let password = undefined;
+    try {
+      password = await Password.findOne({
+        $and: [{ _id: passwordId }, { userId: userId }],
+      });
+    } catch (error) {}
     if (!password) {
       const error = new Error("Password not found");
       error.statusCode = 404;
@@ -203,7 +205,10 @@ exports.deletePassword = async (req, res, next) => {
 
 exports.importFromFile = async (req, res, next) => {
   try {
-    if (req.body?.AUTHENTIFIANT == undefined || req.body.AUTHENTIFIANT.length == 0) {
+    if (
+      req.body?.AUTHENTIFIANT == undefined ||
+      req.body.AUTHENTIFIANT.length == 0
+    ) {
       const error = new Error("No data provided.");
       error.statusCode = 422;
       throw error;
